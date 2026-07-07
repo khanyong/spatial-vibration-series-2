@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geomechanical Simulation Sandbox for Spatial Vibration Mechanics II</title>
+  <!-- Google Fonts: JetBrains Mono & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #09090b;
+      --card-bg: #18181b;
+      --border-color: #27272a;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent-blue: #3b82f6;
+      --accent-red: #ef4444;
+      --accent-purple: #a855f7;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1080px;
+      background-color: #0c0c0e;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .tab-group {
+      display: flex;
+      background-color: #1f1f23;
+      padding: 0.25rem;
+      border-radius: 8px;
+      gap: 0.25rem;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+    }
+
+    .tab-btn.active.rotation { background-color: var(--accent-blue); }
+    .tab-btn.active.expansion { background-color: var(--accent-purple); }
+    .tab-btn.active.lensing { background-color: var(--accent-amber); }
+
+    .main-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 992px) {
+      .main-layout {
+        flex-direction: row;
+      }
+    }
+
+    .canvas-container {
+      flex: 1;
+      background-color: rgba(9, 9, 11, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      max-width: 600px;
+      height: auto;
+      border-radius: 8px;
+      background-color: #09090b;
+      cursor: crosshair;
+    }
+
+    .controls-panel {
+      width: 100%;
+      max-width: 320px;
+      background-color: rgba(24, 24, 27, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .panel-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .control-val {
+      font-weight: 700;
+    }
+
+    .control-val.rotation { color: var(--accent-blue); }
+    .control-val.expansion { color: var(--accent-purple); }
+    .control-val.lensing { color: var(--accent-amber); }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-color);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      transition: transform 0.1s ease;
+    }
+
+    .rotation input[type="range"]::-webkit-slider-thumb { background: var(--accent-blue); }
+    .expansion input[type="range"]::-webkit-slider-thumb { background: var(--accent-purple); }
+    .lensing input[type="range"]::-webkit-slider-thumb { background: var(--accent-amber); }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .theory-card {
+      background-color: #050507;
+      border: 1px solid #1f1f23;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 0.65rem;
+      color: #71717a;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .theory-formula {
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    .reset-btn {
+      width: 100%;
+      background-color: #27272a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      margin-top: auto;
+    }
+
+    .reset-btn:hover {
+      background-color: #3f3f46;
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <h1>Geomechanical Simulation Sandbox II</h1>
+        <div class="subtitle">Unified Dark Fluid and Stochastic Geodesic Lensing (Paper II, V9)</div>
+      </div>
+      
+      <div class="tab-group" id="tabGroup">
+        <button class="tab-btn active rotation" onclick="switchMode('rotation')">Mode A: Dark Matter</button>
+        <button class="tab-btn expansion" onclick="switchMode('expansion')">Mode B: Void Expansion</button>
+        <button class="tab-btn lensing" onclick="switchMode('lensing')">Mode C: Geodesic Lensing</button>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      <!-- Simulator Canvas -->
+      <div class="canvas-container">
+        <canvas id="simCanvas" width="600" height="420"></canvas>
+      </div>
+
+      <!-- Controls Panel -->
+      <div class="controls-panel" id="controlsPanel">
+        <h4 class="panel-title">Parameters Control</h4>
+        
+        <!-- Controls injected dynamically -->
+        <div id="dynamicControls" style="display: contents;"></div>
+
+        <button class="reset-btn" onclick="resetSimulation()">Reset Simulation</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Designed & Engineered by Kwang Yong Yoo © 2026. All rights reserved.
+  </footer>
+
+  <script>
+    // State management
+    let simMode = 'rotation';
+
+    // Physics parameters
+    let galaxyMass = 40;
+    let chameleonCoupling = 1.5;
+    let matterDensity = 2.0;
+    let turbulentNoise = 0.5;
+
+    // View angles for 3D Projection
+    let angleX = 10 * Math.PI / 180;
+    let angleY = 45 * Math.PI / 180;
+
+    // Entities
+    let stars = [];
+    let photons = [];
+    let flashes = [];
+    let frameCount = 0;
+
+    // Drag tracking
+    let isDragging = false;
+    let prevMousePos = { x: 0, y: 0 };
+
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI Configuration based on Mode
+    function renderControls() {
+      const container = document.getElementById('dynamicControls');
+      if (simMode === 'rotation') {
+        container.innerHTML = `
+          <div class="control-group rotation">
+            <div class="control-label">
+              <span>Galaxy Core Mass (M)</span>
+              <span class="control-val rotation">${galaxyMass} M☉</span>
+            </div>
+            <input type="range" min="20" max="100" value="${galaxyMass}" oninput="updateParam('galaxyMass', this.value)">
+          </div>
+          <div class="control-group rotation">
+            <div class="control-label">
+              <span>Chameleon Density (φ)</span>
+              <span class="control-val rotation">${chameleonCoupling} GeV</span>
+            </div>
+            <input type="range" min="0.5" max="3.0" step="0.1" value="${chameleonCoupling}" oninput="updateParam('chameleonCoupling', this.value)">
+          </div>
+          <div class="theory-card">
+            <div>Effective mass density profiles flat rotation curve.</div>
+            <div class="theory-formula">M_eff(r) = M_vis + 4π/c² ∫⟨Ṽ₀₀⟩√g_rr r'² dr'</div>
+          </div>
+        `;
+      } else if (simMode === 'expansion') {
+        const wVal = -1.0 + 1.0 / (1.0 + Math.exp(-(matterDensity - 5.0) / 1.2));
+        container.innerHTML = `
+          <div class="control-group expansion">
+            <div class="control-label">
+              <span>Local Density (ρ_m)</span>
+              <span class="control-val expansion">${matterDensity.toFixed(1)} GeV</span>
+            </div>
+            <input type="range" min="0.0" max="10.0" step="0.1" value="${matterDensity}" oninput="updateParam('matterDensity', this.value)">
+          </div>
+          <div class="control-group expansion">
+            <div class="control-label">
+              <span>E.O.S w(ρ_m) Value</span>
+              <span class="control-val expansion" style="color: #34d399">w = ${wVal.toFixed(2)}</span>
+            </div>
+            <div class="theory-card">
+              <div class="theory-formula">w ≈ -1 + 1 / (1 + e^(-(ρ_m - ρ_crit)/σ))</div>
+              <div style="margin-top: 4px;">ρ_m → 0: w → -1 (Dark Energy)</div>
+              <div>ρ_m → 10: w → 0 (Dark Matter)</div>
+            </div>
+          </div>
+        `;
+      } else if (simMode === 'lensing') {
+        container.innerHTML = `
+          <div class="control-group lensing">
+            <div class="control-label">
+              <span>Deflection Strength (M_bh)</span>
+              <span class="control-val lensing">${chameleonCoupling} M_sol</span>
+            </div>
+            <input type="range" min="0.5" max="3.0" step="0.1" value="${chameleonCoupling}" oninput="updateParam('chameleonCoupling', this.value)">
+          </div>
+          <div class="control-group lensing">
+            <div class="control-label">
+              <span>Phase Turbulence (δΓ)</span>
+              <span class="control-val lensing">${turbulentNoise.toFixed(1)} GeV</span>
+            </div>
+            <input type="range" min="0.0" max="2.0" step="0.1" value="${turbulentNoise}" oninput="updateParam('turbulentNoise', this.value)">
+          </div>
+          <div class="theory-card">
+            <div>stochastic geodesic deflection exhibiting achromatic dispersion:</div>
+            <div class="theory-formula">d²x/dλ² + (Γ + δΓ) dx/dλ dx/dλ = 0</div>
+          </div>
+        `;
+      }
+    }
+
+    function updateParam(param, val) {
+      if (param === 'galaxyMass') galaxyMass = Number(val);
+      if (param === 'chameleonCoupling') chameleonCoupling = Number(val);
+      if (param === 'matterDensity') matterDensity = Number(val);
+      if (param === 'turbulentNoise') turbulentNoise = Number(val);
+      renderControls();
+      resetSimulation();
+    }
+
+    function switchMode(mode) {
+      simMode = mode;
+      
+      // Update active button state
+      const buttons = document.getElementById('tabGroup').children;
+      for (let btn of buttons) {
+        btn.classList.remove('active');
+      }
+      document.querySelector(`.tab-btn.${mode}`).classList.add('active');
+      
+      renderControls();
+      resetSimulation();
+    }
+
+    function resetSimulation() {
+      stars = [];
+      photons = [];
+      flashes = [];
+      frameCount = 0;
+
+      if (simMode === 'rotation') {
+        for (let i = 0; i < 80; i++) {
+          const r = 40 + Math.random() * 140;
+          const theta = Math.random() * 2 * Math.PI;
+          const vNewton = Math.sqrt((galaxyMass * 100) / r);
+          const vFlat = chameleonCoupling * 4.5;
+          const vCombined = Math.sqrt(vNewton * vNewton + vFlat * vFlat);
+          stars.push({
+            r,
+            theta,
+            speed: vCombined * 0.005,
+            size: 1 + Math.random() * 2,
+            color: `hsl(${200 + Math.random() * 40}, 85%, ${70 + Math.random() * 20}%)`
+          });
+        }
+      }
+    }
+
+    // Drag handling for Lensing (3D grid rotation)
+    canvas.addEventListener('mousedown', (e) => {
+      if (simMode !== 'lensing') return;
+      isDragging = true;
+      prevMousePos = { x: e.clientX, y: e.clientY };
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging || simMode !== 'lensing') return;
+      const dx = e.clientX - prevMousePos.x;
+      const dy = e.clientY - prevMousePos.y;
+      angleY += dx * 0.007;
+      angleX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, angleX - dy * 0.007));
+      prevMousePos = { x: e.clientX, y: e.clientY };
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // GLSL-like deterministic hash to ensure R, G, B triplets share identical paths
+    function hash(x1, y1) {
+      const val = Math.sin(x1 * 12.9898 + y1 * 78.233) * 43758.5453;
+      return val - Math.floor(val);
+    }
+
+    // Rendering loop
+    function render() {
+      frameCount++;
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Clear with zinc-950 dark background
+      ctx.fillStyle = '#09090b';
+      ctx.fillRect(0, 0, width, height);
+
+      if (simMode === 'rotation') {
+        const cx = width * 0.65;
+        const cy = height / 2;
+
+        // Draw Tensor Condensation Halo
+        ctx.save();
+        const haloGrad = ctx.createRadialGradient(cx, cy, 70, cx, cy, 185);
+        haloGrad.addColorStop(0, 'rgba(250, 204, 21, 0)');
+        haloGrad.addColorStop(0.5, `rgba(250, 204, 21, ${chameleonCoupling * 0.055})`);
+        haloGrad.addColorStop(1, 'rgba(250, 204, 21, 0)');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 185, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+
+        // Draw Bulge
+        const bulgeGrad = ctx.createRadialGradient(cx, cy, 2, cx, cy, 25);
+        bulgeGrad.addColorStop(0, '#ffffff');
+        bulgeGrad.addColorStop(0.2, '#fef08a');
+        bulgeGrad.addColorStop(0.5, 'rgba(245, 158, 11, 0.4)');
+        bulgeGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = bulgeGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 25, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Spiral Arms
+        ctx.save();
+        ctx.globalAlpha = 0.07;
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 15;
+        for (let arm = 0; arm < 2; arm++) {
+          ctx.beginPath();
+          for (let angle = 0; angle < 4 * Math.PI; angle += 0.1) {
+            const r = 10 + angle * 12;
+            const theta = angle + (arm * Math.PI) + frameCount * 0.003;
+            const x = cx + r * Math.cos(theta);
+            const y = cy + r * Math.sin(theta);
+            angle === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Stars
+        stars.forEach((star) => {
+          star.theta += star.speed;
+          const x = cx + star.r * Math.cos(star.theta);
+          const y = cy + star.r * Math.sin(star.theta);
+          ctx.fillStyle = star.color;
+          ctx.beginPath();
+          ctx.arc(x, y, star.size, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+
+        // Rotation Velocity vs Radius Plot (Left side)
+        const gx = 45;
+        const gy = 80;
+        const gw = 180;
+        const gh = 240;
+
+        ctx.save();
+        ctx.strokeStyle = '#27272a';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(gx - 10, gy - 20, gw + 20, gh + 40, 8);
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.7)';
+        ctx.fill();
+
+        ctx.strokeStyle = '#3f3f46';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(gx, gy);
+        ctx.lineTo(gx, gy + gh);
+        ctx.lineTo(gx + gw, gy + gh);
+        ctx.stroke();
+
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = '9px monospace';
+        ctx.fillText('v (Velocity)', gx - 5, gy - 8);
+        ctx.fillText('r (Radius)', gx + gw - 40, gy + gh + 12);
+
+        // Curve 1: Newtonian
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let r = 20; r <= gw; r++) {
+          const v = Math.sqrt((galaxyMass * 100) / r) * 3;
+          const px = gx + r;
+          const py = gy + gh - v;
+          r === 20 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Curve 2: Observed (Flat)
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        for (let r = 20; r <= gw; r++) {
+          const vNewton = Math.sqrt((galaxyMass * 100) / r);
+          const vFlat = chameleonCoupling * 4.5;
+          const vCombined = Math.sqrt(vNewton * vNewton + vFlat * vFlat) * 3;
+          const px = gx + r;
+          const py = gy + gh - vCombined;
+          r === 20 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+        }
+        ctx.stroke();
+
+        // Plot current star speeds
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        stars.slice(0, 30).forEach((star) => {
+          const r = star.r - 20;
+          if (r > 0 && r < gw) {
+            const vNewton = Math.sqrt((galaxyMass * 100) / star.r);
+            const vFlat = chameleonCoupling * 4.5;
+            const vCombined = Math.sqrt(vNewton * vNewton + vFlat * vFlat) * 3;
+            ctx.beginPath();
+            ctx.arc(gx + r, gy + gh - vCombined, 2, 0, 2 * Math.PI);
+            ctx.fill();
+          }
+        });
+
+        // Legends
+        ctx.font = 'bold 8.5px monospace';
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText('Observed Rotation (Flat)', gx + 20, gy + 15);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillText('Newtonian Gravity Well', gx + 20, gy + 30);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillText("M_eff(r) = M_vis + 4π/c² ∫⟨Ṽ₀₀⟩√g_rr r'² dr'", gx + 20, gy + 48);
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.85)';
+        ctx.fillText('Tensor Condensation Halo (φ)', gx + 20, gy + 63);
+        ctx.restore();
+
+        ctx.fillStyle = '#f4f4f5';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('GALAXY ROTATION CURVES (DARK MATTER)', 20, 30);
+
+      } else if (simMode === 'expansion') {
+        const cx = width * 0.65;
+        const cy = height / 2;
+
+        const wCoeff = -1.0 + 1.0 / (1.0 + Math.exp(-(matterDensity - 5.0) / 1.2));
+        const effectiveExpansion = Math.abs(wCoeff);
+        const aFactor = 1.0 + Math.pow(frameCount * 0.004 * (effectiveExpansion * 4.0), 1.8);
+        const loopFactor = (aFactor % 180);
+
+        // Draw Expanding Void grid cells
+        ctx.save();
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.15)';
+        ctx.lineWidth = 1;
+        const gridSize = 40;
+        for (let x = -gridSize * 4; x <= width + gridSize * 4; x += gridSize) {
+          for (let y = -gridSize * 4; y <= height + gridSize * 4; y += gridSize) {
+            const dx = x - cx;
+            const dy = y - cy;
+            const expansionShift = 1 + (loopFactor * 0.015);
+            const px = cx + dx * expansionShift;
+            const py = cy + dy * expansionShift;
+
+            if (px > 0 && px < width && py > 0 && py < height) {
+              ctx.strokeRect(px - 15, py - 15, 30, 30);
+            }
+          }
+        }
+        ctx.restore();
+
+        // Outward radiation pressure vector arrows
+        ctx.save();
+        ctx.strokeStyle = '#a855f7';
+        ctx.fillStyle = '#a855f7';
+        ctx.lineWidth = 1.5;
+        const step = 60;
+        for (let x = step; x < width; x += step) {
+          for (let y = step; y < height; y += step) {
+            const dx = x - cx;
+            const dy = y - cy;
+            const r = Math.sqrt(dx * dx + dy * dy);
+            if (r < 30 || r > 240) continue;
+
+            const angle = Math.atan2(dy, dx);
+            const forceLen = Math.min(18, (r * 0.08) * (effectiveExpansion * 1.5));
+            const endX = x + Math.cos(angle) * forceLen;
+            const endY = y + Math.sin(angle) * forceLen;
+
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(endX, endY); ctx.stroke();
+            ctx.beginPath(); ctx.arc(endX, endY, 2, 0, 2 * Math.PI); ctx.fill();
+          }
+        }
+        ctx.restore();
+
+        // Scale Factor a(t) chart (Left Top)
+        const gx = 45;
+        const gy = 80;
+        const gw = 180;
+        const gh = 100;
+
+        ctx.save();
+        ctx.strokeStyle = '#27272a';
+        ctx.beginPath(); ctx.roundRect(gx - 10, gy - 20, gw + 20, gh + 40, 8); ctx.stroke();
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.7)'; ctx.fill();
+
+        ctx.strokeStyle = '#3f3f46';
+        ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); ctx.lineTo(gx + gw, gy + gh); ctx.stroke();
+
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = '8px monospace';
+        ctx.fillText('a(t) Scale', gx - 5, gy - 8);
+        ctx.fillText('t (Time)', gx + gw - 35, gy + gh + 12);
+
+        ctx.strokeStyle = '#a855f7';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        for (let t = 0; t <= gw; t++) {
+          const val = Math.pow(t * 0.03 * (effectiveExpansion * 3.5), 1.8) * 3;
+          const py = Math.max(gy, gy + gh - val);
+          t === 0 ? ctx.moveTo(gx + t, py) : ctx.lineTo(gx + t, py);
+        }
+        ctx.stroke();
+
+        ctx.font = 'bold 8.5px monospace';
+        ctx.fillStyle = '#a855f7';
+        ctx.fillText('a(t) ∝ e^(Ht)', gx + 15, gy + 15);
+        ctx.fillStyle = '#34d399';
+        ctx.fillText('p_vib < 0 (Inflation)', gx + 15, gy + 30);
+        ctx.restore();
+
+        // S-Curve w(ρ_m) chart (Left Bottom)
+        const gx2 = 45;
+        const gy2 = 230;
+        const gw2 = 180;
+        const gh2 = 100;
+
+        ctx.save();
+        ctx.strokeStyle = '#27272a';
+        ctx.beginPath(); ctx.roundRect(gx2 - 10, gy2 - 20, gw2 + 20, gh2 + 40, 8); ctx.stroke();
+        ctx.fillStyle = 'rgba(9, 9, 11, 0.7)'; ctx.fill();
+
+        ctx.strokeStyle = '#3f3f46';
+        ctx.beginPath(); ctx.moveTo(gx2, gy2); ctx.lineTo(gx2, gy2 + gh2); ctx.lineTo(gx2 + gw2, gy2 + gh2); ctx.stroke();
+
+        ctx.fillStyle = '#a1a1aa';
+        ctx.font = '8px monospace';
+        ctx.fillText('w (E.O.S)', gx2 - 5, gy2 - 8);
+        ctx.fillText('ρ_m (Density)', gx2 + gw2 - 50, gy2 + gh2 + 12);
+
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        for (let dx = 0; dx <= gw2; dx++) {
+          const rho = (dx / gw2) * 10;
+          const wVal = -1.0 + 1.0 / (1.0 + Math.exp(-(rho - 5.0) / 1.2));
+          const py = gy2 + gh2 - (wVal + 1.0) * gh2;
+          dx === 0 ? ctx.moveTo(gx2 + dx, py) : ctx.lineTo(gx2 + dx, py);
+        }
+        ctx.stroke();
+
+        // Plot current operating point
+        const currentX = gx2 + (matterDensity / 10) * gw2;
+        const currentY = gy2 + gh2 - (wCoeff + 1.0) * gh2;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(currentX, currentY, 4, 0, 2 * Math.PI); ctx.fill();
+        ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 1.5; ctx.stroke();
+
+        ctx.font = 'bold 8px monospace';
+        ctx.fillStyle = '#34d399'; ctx.fillText(`w = ${wCoeff.toFixed(2)}`, gx2 + 15, gy2 + 15);
+        ctx.fillStyle = '#a1a1aa'; ctx.fillText(`ρ_crit=5.0, σ=1.2`, gx2 + 15, gy2 + 28);
+        ctx.restore();
+
+        ctx.fillStyle = '#f4f4f5';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('CHAMELEON VACUUM PRESSURE (DARK ENERGY)', 20, 30);
+
+      } else if (simMode === 'lensing') {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const scale = 50;
+
+        if (frameCount % 15 === 0 && photons.length < 45) {
+          const initY = -120 + Math.random() * 240;
+          const offsets = [
+            { dy: -1, color: '#ef4444' }, // Red
+            { dy: 0, color: '#10b981' },  // Green
+            { dy: 1, color: '#3b82f6' }   // Blue
+          ];
+          offsets.forEach(({ dy, color }) => {
+            photons.push({
+              x: -240,
+              y: initY + dy,
+              vx: 4.5,
+              vy: 0,
+              active: true,
+              isTimeLeaped: false,
+              trail: [],
+              color,
+              initY
+            });
+          });
+        }
+
+        const project = (x, y, z) => {
+          const cosY = Math.cos(angleY), sinY = Math.sin(angleY);
+          const x1 = x * cosY - y * sinY;
+          const y1 = x * sinY + y * cosY;
+          const cosX = Math.cos(angleX), sinX = Math.sin(angleX);
+          const z2 = z * cosX - y1 * sinX;
+          const y2 = z * sinX + y1 * cosX;
+          const projX = (x1 * 8) / (y2 + 8) * scale + centerX;
+          const projY = centerY - (z2 * 8) / (z2 + 8) * scale;
+          return { px: projX, py: projY, depth: y2 };
+        };
+
+        const gridPoints = [];
+        const tWave = frameCount * 0.15;
+
+        for (let u = -6; u <= 6; u++) {
+          const idx = u + 6;
+          gridPoints[idx] = [];
+          for (let v = -6; v <= 6; v++) {
+            const dist = Math.sqrt(u * u + v * v) + 0.1;
+            const zGravity = -chameleonCoupling * 1.8 / dist;
+            const ripple = Math.sin(dist * 2.5 - tWave) * 0.12 * turbulentNoise;
+            const zTotal = zGravity + ripple;
+            gridPoints[idx].push(project(u * 35, v * 35, zTotal * 15));
+          }
+        }
+
+        // Draw grid
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.08)';
+        ctx.lineWidth = 0.8;
+        for (let i = 0; i < 13; i++) {
+          ctx.beginPath();
+          for (let j = 0; j < 13; j++) {
+            j === 0 ? ctx.moveTo(gridPoints[i][j].px, gridPoints[i][j].py) : ctx.lineTo(gridPoints[i][j].px, gridPoints[i][j].py);
+          }
+          ctx.stroke();
+        }
+        for (let j = 0; j < 13; j++) {
+          ctx.beginPath();
+          for (let i = 0; i < 13; i++) {
+            i === 0 ? ctx.moveTo(gridPoints[i][j].px, gridPoints[i][j].py) : ctx.lineTo(gridPoints[i][j].px, gridPoints[i][j].py);
+          }
+          ctx.stroke();
+        }
+
+        // Draw Black Hole
+        const blackHoleProj = project(0, 0, 0);
+        const bhGrad = ctx.createRadialGradient(blackHoleProj.px, blackHoleProj.py, 2, blackHoleProj.px, blackHoleProj.py, 20);
+        bhGrad.addColorStop(0, '#000000');
+        bhGrad.addColorStop(0.4, '#09090b');
+        bhGrad.addColorStop(0.7, '#f59e0b');
+        bhGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+        ctx.fillStyle = bhGrad;
+        ctx.beginPath(); ctx.arc(blackHoleProj.px, blackHoleProj.py, 20, 0, 2 * Math.PI); ctx.fill();
+
+        // Render time-leap flashes & negative pressure rings
+        flashes.forEach((flash) => {
+          ctx.save();
+          ctx.strokeStyle = `rgba(250, 204, 21, ${flash.alpha * 0.75})`;
+          ctx.setLineDash([4, 3]);
+          ctx.lineWidth = 1.8;
+          ctx.beginPath(); ctx.moveTo(flash.startPx, flash.startPy); ctx.lineTo(flash.endPx, flash.endPy); ctx.stroke();
+
+          // Outward pointing negative pressure ring (p_vib < 0)
+          const bhProj = project(0, 0, 0);
+          ctx.strokeStyle = `rgba(168, 85, 247, ${flash.alpha * 0.8})`;
+          ctx.lineWidth = 1.2;
+          const ringRadius = 25 + (1.0 - flash.alpha) * 35;
+          ctx.beginPath(); ctx.arc(bhProj.px, bhProj.py, ringRadius, 0, 2 * Math.PI); ctx.stroke();
+
+          for (let a = 0; a < 2 * Math.PI; a += Math.PI / 4) {
+            const ax = bhProj.px + Math.cos(a) * ringRadius;
+            const ay = bhProj.py + Math.sin(a) * ringRadius;
+            const arrowLen = 5;
+            ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + Math.cos(a) * arrowLen, ay + Math.sin(a) * arrowLen); ctx.stroke();
+          }
+
+          ctx.fillStyle = `rgba(250, 204, 21, ${flash.alpha * 0.9})`;
+          ctx.beginPath(); ctx.arc(flash.endPx, flash.endPy, 4 + 4 * flash.alpha, 0, 2 * Math.PI); ctx.fill();
+
+          ctx.font = 'bold 8px monospace';
+          ctx.fillStyle = `rgba(253, 224, 71, ${flash.alpha})`;
+          ctx.fillText('Time-Leap (Junction, p_vib < 0)', flash.endPx + 8, flash.endPy - 4);
+          ctx.restore();
+
+          flash.alpha -= 0.025;
+        });
+        flashes = flashes.filter(f => f.alpha > 0);
+
+        // Render Photons
+        photons.forEach((photon) => {
+          if (!photon.active) return;
+
+          ctx.strokeStyle = photon.color + '26';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          photon.trail.forEach((t, idx) => {
+            idx === 0 ? ctx.moveTo(t.px, t.py) : ctx.lineTo(t.px, t.py);
+          });
+          ctx.stroke();
+
+          const currentProj = project(photon.x, photon.y, 0);
+          photon.trail.push(currentProj);
+          if (photon.trail.length > 20) photon.trail.shift();
+
+          const distSq = photon.x * photon.x + photon.y * photon.y + 100;
+          const force = (chameleonCoupling * 1800) / distSq;
+          const angle = Math.atan2(-photon.y, -photon.x);
+
+          photon.vx += Math.cos(angle) * force * 0.01;
+          photon.vy += Math.sin(angle) * force * 0.01;
+
+          if (turbulentNoise > 0) {
+            const noise = (hash(Math.floor(photon.x), photon.initY) - 0.5) * turbulentNoise * 1.5;
+            photon.vy += noise;
+          }
+
+          // Jump Condition
+          if (photon.x > -25 && photon.x < 5 && !photon.isTimeLeaped && chameleonCoupling > 1.3 && turbulentNoise > 0.4) {
+            const startX = photon.x;
+            const startY = photon.y;
+            photon.isTimeLeaped = true;
+            photon.x += 130;
+            photon.trail = [];
+
+            const startProj = project(startX, startY, 0);
+            const endProj = project(photon.x, photon.y, 0);
+
+            flashes.push({
+              startPx: startProj.px,
+              startPy: startProj.py,
+              endPx: endProj.px,
+              endPy: endProj.py,
+              alpha: 1.0
+            });
+          }
+
+          photon.x += photon.vx;
+          photon.y += photon.vy;
+
+          ctx.fillStyle = photon.color;
+          ctx.beginPath(); ctx.arc(currentProj.px, currentProj.py, 2, 0, 2 * Math.PI); ctx.fill();
+
+          if (photon.x > 320 || photon.x < -320 || photon.y > 320 || photon.y < -320) {
+            photon.active = false;
+          }
+        });
+        photons = photons.filter(p => p.active || p.trail.length > 0);
+
+        ctx.fillStyle = '#9ca3af';
+        ctx.font = '9px monospace';
+        ctx.fillText('🔄 Click & Drag canvas to rotate gravitational grid', 20, height - 20);
+
+        ctx.fillStyle = '#f4f4f5';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText('STOCHASTIC GEODESIC LENSING (MICRO-LENSING)', 20, 30);
+      }
+    }
+
+    function runLoop() {
+      render();
+      requestAnimationFrame(runLoop);
+    }
+
+    // Init
+    renderControls();
+    resetSimulation();
+    runLoop();
+  </script>
+</body>
+</html>

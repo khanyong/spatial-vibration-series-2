@@ -590,12 +590,6 @@ export const SimulationWidget_V2: React.FC = () => {
         });
         flashesRef.current = flashesRef.current.filter((f) => f.alpha > 0);
 
-        // GLSL-like deterministic hash to ensure R, G, B triplets share identical paths
-        const hash = (x1: number, y1: number) => {
-          const val = Math.sin(x1 * 12.9898 + y1 * 78.233) * 43758.5453;
-          return val - Math.floor(val);
-        };
-
         // Update and draw photons
         photonsRef.current.forEach((photon) => {
           if (!photon.active) return;
@@ -624,8 +618,9 @@ export const SimulationWidget_V2: React.FC = () => {
 
           // V8 Phase Turbulence: Achromatic stochastic geodesic deviation
           if (turbulentNoise > 0) {
-            // Noise is deterministic based on current photon x coordinate (discretized) and initial Y coordinate of the triplet
-            const noise = (hash(Math.floor(photon.x), photon.initY) - 0.5) * turbulentNoise * 1.5;
+            // [개선안] Math.floor를 제거하고 부드러운 연속 공간 파동(Continuous Spatial Wave) 함수 적용
+            // photon.initY를 시드로 사용하여 RGB 광자 3가닥이 완벽히 동일한 궤적(Achromatic)을 그리도록 보장
+            const noise = Math.sin(photon.x * 0.18 + photon.initY * 12.3) * Math.cos(photon.x * 0.08) * turbulentNoise * 1.5;
             photon.vy += noise;
           }
 
